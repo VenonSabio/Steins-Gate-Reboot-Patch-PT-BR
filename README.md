@@ -1,6 +1,6 @@
 # STEINS;GATE RE:BOOT — Tradução PT-BR
 
-Tradução não oficial, feita por fãs, de **STEINS;GATE RE:BOOT** (versão Steam) para português brasileiro.
+Tradução não oficial, feita por fãs (digo, um fã hahahah), de **STEINS;GATE RE:BOOT** (versão Steam) para português brasileiro.
 
 O patch **não contém o jogo**. Ele guarda só as diferenças em relação aos arquivos originais e precisa de uma cópia legítima do jogo para funcionar. O resultado é conferido arquivo por arquivo por SHA-256.
 
