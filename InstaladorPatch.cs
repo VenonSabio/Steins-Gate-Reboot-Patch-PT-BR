@@ -24,6 +24,35 @@ static class Instalador
         }
     }
 
+    const string URL = "https://github.com/VenonSabio/Steins-Gate-Reboot-Patch-PT-BR/releases/download/v1.0/";
+
+    static void Baixar(string url, string destino, long tamanho)
+    {
+        System.Net.ServicePointManager.SecurityProtocol = (System.Net.SecurityProtocolType)3072; // TLS 1.2
+        Console.WriteLine("Baixando " + Path.GetFileName(destino) + (tamanho > 0 ? " (" + (tamanho / 1048576) + " MB)" : "") + "...");
+        string tmp = destino + ".part"; long ja = File.Exists(tmp) ? new FileInfo(tmp).Length : 0;
+        var req = (System.Net.HttpWebRequest)System.Net.WebRequest.Create(url);
+        req.UserAgent = "SGPTBR-Installer"; req.AllowAutoRedirect = true; req.Timeout = 60000; req.ReadWriteTimeout = 120000;
+        if (ja > 0) req.AddRange(ja);
+        using (var resp = (System.Net.HttpWebResponse)req.GetResponse())
+        {
+            if (ja > 0 && resp.StatusCode != System.Net.HttpStatusCode.PartialContent) ja = 0;
+            using (var s = resp.GetResponseStream())
+            using (var o = new FileStream(tmp, ja > 0 ? FileMode.Append : FileMode.Create, FileAccess.Write))
+            {
+                var buf = new byte[1 << 20]; int n; long tot = ja; int ultimo = -1;
+                while ((n = s.Read(buf, 0, buf.Length)) > 0)
+                {
+                    o.Write(buf, 0, n); tot += n;
+                    if (tamanho > 0) { int pct = (int)(tot * 100 / tamanho); if (pct != ultimo) { Console.Write("\r  " + pct + "%   "); ultimo = pct; } }
+                }
+                Console.WriteLine();
+            }
+        }
+        if (File.Exists(destino)) File.Delete(destino);
+        File.Move(tmp, destino);
+    }
+
     static string PedirPasta()
     {
         string here = AppDomain.CurrentDomain.BaseDirectory;
@@ -47,19 +76,31 @@ static class Instalador
         Console.WriteLine("STEINS;GATE RE:BOOT — Tradução PT-BR (patch)\n");
         try
         {
-            string dir = AppDomain.CurrentDomain.BaseDirectory;
+            string game = args.Length > 0 ? args[0] : PedirPasta();
+            if (string.IsNullOrEmpty(game) || !File.Exists(Path.Combine(game, "sgre_steam.exe"))) throw new Exception("Pasta inválida: sgre_steam.exe não encontrado.");
+            if (System.Diagnostics.Process.GetProcessesByName("sgre_steam").Length > 0) throw new Exception("Feche o jogo antes de instalar.");
+
+            // Dados do patch: usa os arquivos ao lado do .exe; se faltarem, baixa da Release do GitHub.
+            string dir = AppDomain.CurrentDomain.BaseDirectory; bool baixado = false;
+            if (!File.Exists(Path.Combine(dir, "patch_ptbr.json")))
+            {
+                dir = Path.Combine(Path.GetTempPath(), "SteinsGateReboot_PTBR_patch"); Directory.CreateDirectory(dir); baixado = true;
+                Baixar(URL + "patch_ptbr.json", Path.Combine(dir, "patch_ptbr.json"), -1);
+            }
             var js = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
             var idx = js.Deserialize<Dictionary<string, object>>(File.ReadAllText(Path.Combine(dir, "patch_ptbr.json")));
             var partes = ((System.Collections.ArrayList)idx["partes"]).Cast<Dictionary<string, object>>().ToList();
             foreach (var p in partes)
             {
-                string pp = Path.Combine(dir, (string)p["nome"]);
-                if (!File.Exists(pp)) throw new Exception("Parte do patch ausente: " + p["nome"] + " (baixe todas as partes para a mesma pasta).");
-                if (new FileInfo(pp).Length != Convert.ToInt64(p["bytes"])) throw new Exception("Parte incompleta/corrompida: " + p["nome"]);
+                string nome = (string)p["nome"], pp = Path.Combine(dir, nome); long tam = Convert.ToInt64(p["bytes"]);
+                if (!File.Exists(pp) || new FileInfo(pp).Length != tam)
+                {
+                    if (!baixado && !File.Exists(Path.Combine(dir, "patch_ptbr.json"))) throw new Exception("Parte do patch ausente: " + nome);
+                    Baixar(URL + nome, pp, tam);
+                }
+                Console.WriteLine("Conferindo " + nome + "...");
+                if (Sha(pp) != (string)p["sha256"]) { File.Delete(pp); throw new Exception("Download corrompido: " + nome + ". Execute o instalador de novo."); }
             }
-            string game = args.Length > 0 ? args[0] : PedirPasta();
-            if (string.IsNullOrEmpty(game) || !File.Exists(Path.Combine(game, "sgre_steam.exe"))) throw new Exception("Pasta inválida: sgre_steam.exe não encontrado.");
-            if (System.Diagnostics.Process.GetProcessesByName("sgre_steam").Length > 0) throw new Exception("Feche o jogo antes de instalar.");
             var arqs = ((System.Collections.ArrayList)idx["arquivos"]).Cast<Dictionary<string, object>>().ToList();
 
             Console.WriteLine("Conferindo arquivos do jogo (pode levar alguns minutos)...");
@@ -106,6 +147,7 @@ static class Instalador
                 }
             }
             finally { foreach (var s in abertas.Values) s.Dispose(); }
+            if (baixado) { try { Directory.Delete(dir, true); } catch { } }
             Console.WriteLine("\nTradução instalada e verificada (SHA-256 idêntico ao pacote " + idx["pacote"] + ").");
             Console.WriteLine("No jogo: AJUSTES > IDIOMA > Português.");
             Pausa(); return 0;

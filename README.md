@@ -16,14 +16,13 @@ Japonês, inglês e chinês tradicional ficam intactos. O português ocupa o esp
 
 ## Instalação
 
-1. Baixe **todos** os arquivos da [Release mais recente](../../releases/latest) para a mesma pasta:
-   - `Instalar_Traducao_PTBR.exe`
-   - `patch_ptbr.json`
-   - `patch_ptbr.pak.000`
-   - `patch_ptbr.pak.001`
-2. Feche o jogo e execute `Instalar_Traducao_PTBR.exe`.
+1. Baixe **só** o `Instalar_Traducao_PTBR.exe` da [Release mais recente](../../releases/latest).
+2. Feche o jogo e execute o instalador.
 3. Escolha a pasta do jogo, a que contém `sgre_steam.exe`.
-4. No jogo: **AJUSTES → IDIOMA → Português** (4ª opção).
+4. O instalador baixa sozinho o restante do patch (cerca de 3,3 GB) desta mesma Release, confere e instala.
+5. No jogo: **AJUSTES → IDIOMA → Português** (4ª opção).
+
+Instalação offline: se `patch_ptbr.json` e as partes `patch_ptbr.pak.*` estiverem na mesma pasta do `.exe`, ele usa esses arquivos e não baixa nada.
 
 O instalador:
 - confere se os arquivos do jogo são os originais da Steam;
@@ -33,7 +32,7 @@ O instalador:
 > ⚠️ O instalador **não faz backup**. Para voltar ao original, use *Propriedades → Arquivos instalados → Verificar integridade dos arquivos* na Steam.
 > Se o instalador disser que o jogo é incompatível, verifique a integridade pela Steam e tente de novo.
 
-Requisitos: Windows com .NET Framework 4.x (já incluso no Windows 10/11) e cerca de 6 GB livres durante a instalação.
+Requisitos: Windows com .NET Framework 4.x (já incluso no Windows 10/11) e conexão com a internet e cerca de 7 GB livres durante a instalação.
 
 ## Glossário
 
