@@ -42,7 +42,7 @@ Na Steam: clique com o botão direito no jogo → *Propriedades* → *Arquivos i
 
 | Item | Situação |
 |---|---|
-| Versão Steam, atualização de 30/10/2026 | Suportada (patch v1.2) |
+| Versão Steam, atualização de 30/10/2026 | Suportada (patch v1.3) |
 | Versões anteriores da Steam | Use a release correspondente (v1.1) |
 | Outras lojas, cópias modificadas ou com outros patches | Não suportadas: o instalador recusa arquivos que não sejam os originais |
 | Windows 11 | Testado (Windows 10 deve funcionar, mas não foi testado) |
