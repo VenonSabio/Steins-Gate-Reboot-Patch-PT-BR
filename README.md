@@ -34,6 +34,51 @@ O instalador:
 
 Requisitos: Windows com .NET Framework 4.x (já incluso no Windows 10/11) e conexão com a internet e cerca de 7 GB livres durante a instalação.
 
+## Desinstalação
+
+Na Steam: clique com o botão direito no jogo → *Propriedades* → *Arquivos instalados* → *Verificar integridade dos arquivos*. A Steam baixa de novo os arquivos originais e a tradução é removida.
+
+## Compatibilidade
+
+| Item | Situação |
+|---|---|
+| Versão Steam, atualização de 30/10/2026 | Suportada (patch v1.2) |
+| Versões anteriores da Steam | Use a release correspondente (v1.1) |
+| Outras lojas, cópias modificadas ou com outros patches | Não suportadas: o instalador recusa arquivos que não sejam os originais |
+| Windows 11 | Testado (Windows 10 deve funcionar, mas não foi testado) |
+
+Se uma atualização do jogo mudar os arquivos, o instalador avisa que a versão é incompatível em vez de instalar por cima.
+
+## O que já foi testado
+
+| Parte | Situação |
+|---|---|
+| Instalação, verificação de hashes e reinstalação por cima | Testado |
+| Início do jogo e diálogos dos primeiros capítulos | Testado parcialmente |
+| Menu SYSTEM e tela de ajustes | Testado |
+| Salvar/carregar e histórico | Testado parcialmente |
+| TIPS, e-mails, telefone e fluxograma | Testados parcialmente |
+| Finais e galeria | Verificados nos arquivos, não vistos em execução |
+
+A lista detalhada fica em [`TESTES.md`](TESTES.md).
+
+## Perguntas frequentes
+
+**O antivírus acusou o instalador.**
+É um falso positivo comum em executáveis sem assinatura digital que baixam arquivos. O código-fonte está neste repositório (`InstaladorPatch.cs`) e pode ser compilado por você mesmo.
+
+**Perco meus saves?**
+Não. O patch não toca nos saves. Mesmo assim, fazer uma cópia antes nunca é demais.
+
+**Posso trocar de idioma depois?**
+Sim. Japonês, inglês e chinês tradicional continuam disponíveis em *AJUSTES → IDIOMA*.
+
+**O jogo atualizou e a tradução sumiu ou o instalador recusou.**
+Aguarde uma nova versão do patch para a atualização do jogo e acompanhe as Releases.
+
+**Por que o português aparece no lugar do chinês simplificado?**
+O jogo só tem quatro espaços de idioma. O português ocupa o último para não remover nenhum idioma oficial do menu.
+
 ## Glossário
 
 As principais escolhas de termos estão em [`Glossario_PTBR.csv`](Glossario_PTBR.csv). Exemplos: Linha de Mundo, Salto Temporal, D-Mail, Reading Steiner, Laboratório de Gadgets Futurísticos, SERN, El Psy Kongroo. A seção TIPS mantém esse nome.

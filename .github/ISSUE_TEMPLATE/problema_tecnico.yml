@@ -1,0 +1,28 @@
+name: Problema técnico
+description: Crash, erro no instalador, texto cortado ou imagem quebrada
+labels: ["bug"]
+body:
+  - type: input
+    id: versao
+    attributes:
+      label: Versão do patch
+      placeholder: v1.2
+    validations:
+      required: true
+  - type: textarea
+    id: oque
+    attributes:
+      label: O que aconteceu
+      description: O que você fez, o que esperava e o que aconteceu.
+    validations:
+      required: true
+  - type: textarea
+    id: erro
+    attributes:
+      label: Mensagem de erro
+      description: Se o instalador falhou, copie a mensagem que apareceu na janela.
+      render: text
+  - type: textarea
+    id: imagem
+    attributes:
+      label: Captura de tela

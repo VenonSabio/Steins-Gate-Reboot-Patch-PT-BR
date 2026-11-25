@@ -1,0 +1,26 @@
+name: Erro de tradução
+description: Erro de texto, sentido, ortografia ou termo inconsistente
+labels: ["tradução"]
+body:
+  - type: textarea
+    id: onde
+    attributes:
+      label: Onde aparece
+      description: Capítulo, cena, TIPS, e-mail ou tela. Quanto mais exato, melhor.
+    validations:
+      required: true
+  - type: textarea
+    id: atual
+    attributes:
+      label: Texto atual
+    validations:
+      required: true
+  - type: textarea
+    id: sugestao
+    attributes:
+      label: Sugestão de correção
+  - type: textarea
+    id: imagem
+    attributes:
+      label: Captura de tela
+      description: Arraste a imagem para cá.
