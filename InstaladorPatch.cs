@@ -1,6 +1,8 @@
 ﻿// Instalador gráfico do patch PT-BR de STEINS;GATE RE:BOOT (formato SGPT1).
 // Usa patch_ptbr.json + patch_ptbr.pak.NNN ao lado do .exe; se não houver, baixa da Release do GitHub.
-// Confere SHA-256 dos originais antes e de cada arquivo gerado depois. Não cria backups.
+// Confere SHA-256 dos originais antes e de cada arquivo gerado depois.
+// Desinstalar: os "append" guardam o original no começo do arquivo e os "novo" são apagados;
+// só os originais dos "full" são copiados, para %LOCALAPPDATA%\SteinsGateRebootPTBR (nunca na pasta do jogo).
 // Compilar (.NET Framework 4.x):
 //   csc /target:winexe /out:Instalar_Traducao_PTBR.exe /r:System.Web.Extensions.dll /r:System.Windows.Forms.dll /r:System.Drawing.dll InstaladorPatch.cs
 using System;
@@ -18,8 +20,8 @@ using System.Reflection;
 [assembly: AssemblyCompany("VenonSabio")]
 [assembly: AssemblyProduct("Steins;Gate Reboot PT-BR")]
 [assembly: AssemblyCopyright("VenonSabio")]
-[assembly: AssemblyVersion("1.3.0.0")]
-[assembly: AssemblyFileVersion("1.3.0.0")]
+[assembly: AssemblyVersion("1.3.1.0")]
+[assembly: AssemblyFileVersion("1.3.1.0")]
 
 class Janela : Form
 {
@@ -28,7 +30,7 @@ class Janela : Form
         Laranja = Color.FromArgb(214, 96, 0), Texto = Color.FromArgb(35, 35, 40), Cinza = Color.FromArgb(110, 110, 118);
     Image banner, okabe;
 
-    TextBox pasta; Button procurar, instalar; ProgressBar barra; Label status, detalhe; TextBox log;
+    TextBox pasta; Button procurar, instalar, desinstalar; ProgressBar barra; Label status, detalhe; TextBox log;
     volatile bool rodando;
 
     static Image Recurso(string nome)
@@ -64,9 +66,11 @@ class Janela : Form
         detalhe = new Label { Text = "", ForeColor = Cinza, AutoSize = false, Location = new Point(30, 544), Size = new Size(580, 20), BackColor = Color.Transparent };
         instalar = Botao("Instalar", new Point(454, 574), new Size(150, 40), true);
         instalar.Font = new Font("Segoe UI", 11f, FontStyle.Bold);
+        desinstalar = Botao("Desinstalar", new Point(326, 574), new Size(120, 40), false);
         log = new TextBox();
-        var rodape = new Label { Text = "Tradução de fãs, não oficial. Requer a versão Steam original.\nSem backup: para voltar ao original, use \"Verificar integridade\" na Steam.", ForeColor = Cinza, Font = new Font("Segoe UI", 8f), AutoSize = false, Location = new Point(30, 576), Size = new Size(420, 40), BackColor = Color.Transparent };
-        Controls.AddRange(new Control[] { titulo, desc, lbl, pasta, procurar, barra, status, detalhe, instalar, rodape });
+        var rodape = new Label { Text = "Tradução de fãs, não oficial.\nRequer a versão Steam original.", ForeColor = Cinza, Font = new Font("Segoe UI", 8f), AutoSize = false, Location = new Point(30, 576), Size = new Size(290, 40), BackColor = Color.Transparent };
+        Controls.AddRange(new Control[] { titulo, desc, lbl, pasta, procurar, barra, status, detalhe, instalar, desinstalar, rodape });
+        desinstalar.Click += delegate { IniciarDesinstalar(); };
 
         procurar.Click += delegate
         {
@@ -80,7 +84,7 @@ class Janela : Form
             if (AutoPasta == null) PerguntarLimpeza();
         };
         pasta.Text = Detectar();
-        if (AutoPasta != null) { pasta.Text = AutoPasta; Shown += delegate { Iniciar(); }; }
+        if (AutoPasta != null) { pasta.Text = AutoPasta; Shown += delegate { if (AutoDesinstalar) IniciarDesinstalar(); else Iniciar(); }; }
         Shown += delegate { instalar.Focus(); pasta.SelectionLength = 0; };
     }
 
@@ -124,7 +128,7 @@ class Janela : Form
         string game = pasta.Text.Trim().Trim('"');
         if (!File.Exists(Path.Combine(game, "sgre_steam.exe"))) { MessageBox.Show(this, "Pasta inválida: sgre_steam.exe não encontrado.", Text, MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
         if (System.Diagnostics.Process.GetProcessesByName("sgre_steam").Length > 0) { MessageBox.Show(this, "Feche o jogo antes de instalar.", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
-        rodando = true; instalar.Enabled = procurar.Enabled = pasta.Enabled = false; log.Clear();
+        rodando = true; instalar.Enabled = desinstalar.Enabled = procurar.Enabled = pasta.Enabled = false; log.Clear();
         new Thread(() =>
         {
             try
@@ -139,7 +143,7 @@ class Janela : Form
                 Status("Erro na instalação.", e.Message); Log("ERRO: " + e.Message);
                 Saida = 1; UI(() => { if (AutoPasta != null) { System.IO.File.WriteAllText(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "erro_instalacao.txt"), e.Message); Close(); return; } MessageBox.Show(this, e.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error); PerguntarLimpeza(); });
             }
-            finally { rodando = false; UI(() => { instalar.Enabled = procurar.Enabled = pasta.Enabled = true; }); }
+            finally { rodando = false; UI(() => { instalar.Enabled = desinstalar.Enabled = procurar.Enabled = pasta.Enabled = true; }); }
         }) { IsBackground = true }.Start();
     }
 
@@ -233,6 +237,19 @@ class Janela : Form
             // "full" e "novo": o arquivo é substituído por inteiro e conferido no final.
             fazer.Add(a);
         }
+        // Backup para desinstalar: índice + originais dos arquivos "full", fora da pasta do jogo.
+        string bk = PastaBackup(game); Directory.CreateDirectory(bk);
+        File.WriteAllText(Path.Combine(bk, "patch_ptbr.json"), File.ReadAllText(Path.Combine(dir, "patch_ptbr.json")));
+        foreach (var a in arqs.Where(x => (string)x["tipo"] == "full"))
+        {
+            string dest = (string)a["destino"], alvo = Dentro(game, dest), copia = Path.Combine(bk, dest.Replace('/', '\\'));
+            if (File.Exists(copia) && Sha(copia) == (string)a["sha256_original"]) continue;
+            if (File.Exists(alvo) && Sha(alvo) == (string)a["sha256_original"])
+            {
+                Status("Guardando original para desinstalar...", dest);
+                Directory.CreateDirectory(Path.GetDirectoryName(copia)); File.Copy(alvo, copia + ".tmp", true); Trocar(copia + ".tmp", copia);
+            }
+        }
         if (fazer.Count == 0) { Log("A tradução já está instalada e íntegra."); return (string)idx["pacote"]; }
         Log(fazer.Count + " arquivo(s) para instalar.");
 
@@ -285,12 +302,90 @@ class Janela : Form
         return (string)idx["pacote"];
     }
 
-    public static string AutoPasta; public static int Saida = 0;
+    // Backup fica em %LOCALAPPDATA%, uma pasta por instalação do jogo (nunca dentro da pasta do jogo).
+    static string PastaBackup(string game)
+    {
+        string chave;
+        using (var s = SHA256.Create()) chave = BitConverter.ToString(s.ComputeHash(System.Text.Encoding.UTF8.GetBytes(Path.GetFullPath(game).TrimEnd('\\').ToLowerInvariant()))).Replace("-", "").Substring(0, 12);
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SteinsGateRebootPTBR", "backup", chave);
+    }
+
+    // Volta o jogo ao original: corta os "append", apaga os "novo" e devolve os "full" do backup. Confere tudo antes de mexer.
+    void Desinstalar(string game)
+    {
+        string bk = PastaBackup(game), ij = Path.Combine(bk, "patch_ptbr.json");
+        if (!File.Exists(ij)) throw new Exception("Não há backup desta instalação (ela foi feita com uma versão antiga do instalador).\n\nPara voltar ao original, use na Steam: Propriedades → Arquivos instalados → Verificar integridade.");
+        var js = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
+        var arqs = ((System.Collections.ArrayList)js.Deserialize<Dictionary<string, object>>(File.ReadAllText(ij))["arquivos"]).Cast<Dictionary<string, object>>().ToList();
+        Status("Conferindo arquivos...", "Nada é alterado antes de tudo conferir.");
+        var faltam = new List<string>(); int k = 0;
+        foreach (var a in arqs)
+        {
+            k++; Barra((double)k / arqs.Count); string dest = (string)a["destino"], alvo = Dentro(game, dest), tipo = (string)a["tipo"];
+            if (tipo == "append")
+            {
+                long tam = Convert.ToInt64(a["bytes_original"]);
+                if (!File.Exists(alvo) || new FileInfo(alvo).Length < tam || Sha(alvo, tam) != (string)a["sha256_original"]) faltam.Add(dest);
+            }
+            else if (tipo == "full")
+            {
+                string copia = Path.Combine(bk, dest.Replace('/', '\\'));
+                bool ok = File.Exists(alvo) && Sha(alvo) == (string)a["sha256_original"];
+                if (!ok && !(File.Exists(copia) && Sha(copia) == (string)a["sha256_original"])) faltam.Add(dest);
+            }
+        }
+        if (faltam.Count > 0) throw new Exception("Não dá para restaurar com segurança: " + faltam.Count + " arquivo(s) sem original disponível (ex.: " + faltam[0] + ").\nNada foi alterado.\n\nUse na Steam: Propriedades → Arquivos instalados → Verificar integridade.");
+        k = 0;
+        foreach (var a in arqs)
+        {
+            k++; Barra((double)k / arqs.Count); string dest = (string)a["destino"], alvo = Dentro(game, dest), tipo = (string)a["tipo"];
+            Status("Restaurando (" + k + "/" + arqs.Count + ")...", dest);
+            if (tipo == "append")
+            {
+                long tam = Convert.ToInt64(a["bytes_original"]);
+                if (new FileInfo(alvo).Length > tam) using (var f = new FileStream(alvo, FileMode.Open, FileAccess.Write)) f.SetLength(tam);
+            }
+            else if (tipo == "novo") { if (File.Exists(alvo)) File.Delete(alvo); }
+            else if (tipo == "full" && Sha(alvo) != (string)a["sha256_original"])
+            {
+                string copia = Path.Combine(bk, dest.Replace('/', '\\'));
+                File.Copy(copia, alvo + ".ptbr_tmp", true); Trocar(alvo + ".ptbr_tmp", alvo);
+            }
+        }
+        try { Directory.Delete(bk, true); } catch { }
+    }
+
+    void IniciarDesinstalar()
+    {
+        string game = pasta.Text.Trim().Trim('"');
+        if (!File.Exists(Path.Combine(game, "sgre_steam.exe"))) { MessageBox.Show(this, "Pasta inválida: sgre_steam.exe não encontrado.", Text, MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
+        if (System.Diagnostics.Process.GetProcessesByName("sgre_steam").Length > 0) { MessageBox.Show(this, "Feche o jogo antes de desinstalar.", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+        if (!Auto && MessageBox.Show(this, "Remover a tradução e voltar o jogo ao original?", Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+        rodando = true; instalar.Enabled = desinstalar.Enabled = procurar.Enabled = pasta.Enabled = false;
+        new Thread(() =>
+        {
+            try
+            {
+                Desinstalar(game); Barra(1); Status("Tradução removida.", "O jogo voltou aos arquivos originais.");
+                UI(() => { if (Auto) { Close(); return; } MessageBox.Show(this, "Tradução removida. O jogo voltou aos arquivos originais.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information); });
+            }
+            catch (Exception e)
+            {
+                Status("Erro ao desinstalar.", e.Message); Saida = 1;
+                UI(() => { if (Auto) { File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "erro_instalacao.txt"), e.Message); Close(); return; } MessageBox.Show(this, e.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error); });
+            }
+            finally { rodando = false; UI(() => { instalar.Enabled = desinstalar.Enabled = procurar.Enabled = pasta.Enabled = true; }); }
+        }) { IsBackground = true }.Start();
+    }
+
+    static bool Auto { get { return AutoPasta != null; } }
+    public static string AutoPasta; public static bool AutoDesinstalar; public static int Saida = 0;
     [STAThread]
     static int Main(string[] args)
     {
         Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);
-        if (args.Length > 0) AutoPasta = args[0];
+        if (args.Length > 1 && args[0] == "/desinstalar") { AutoDesinstalar = true; AutoPasta = args[1]; }
+        else if (args.Length > 0) AutoPasta = args[0];
         Application.Run(new Janela());
         return Saida;
     }

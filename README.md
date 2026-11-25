@@ -29,20 +29,23 @@ O instalador:
 - aplica a tradução e confere o SHA-256 de cada arquivo gerado;
 - avisa se a tradução já estiver instalada.
 
-> ⚠️ O instalador **não faz backup**. Para voltar ao original, use *Propriedades → Arquivos instalados → Verificar integridade dos arquivos* na Steam.
+> Para remover a tradução, veja [Desinstalação](#desinstalação).
 > Se o instalador disser que o jogo é incompatível, verifique a integridade pela Steam e tente de novo.
 
 Requisitos: Windows com .NET Framework 4.x (já incluso no Windows 10/11) e conexão com a internet e cerca de 7 GB livres durante a instalação.
 
 ## Desinstalação
 
-Na Steam: clique com o botão direito no jogo → *Propriedades* → *Arquivos instalados* → *Verificar integridade dos arquivos*. A Steam baixa de novo os arquivos originais e a tradução é removida.
+Abra o instalador, escolha a pasta do jogo e clique em **Desinstalar**. Ele confere tudo antes de mexer e devolve o jogo aos arquivos originais, conferindo o SHA-256 de cada um.
+
+- A partir da v1.3.1, o instalador guarda os originais dos 10 arquivos que substitui por inteiro (cerca de 460 MB) em `%LOCALAPPDATA%\SteinsGateRebootPTBR`, fora da pasta do jogo. Os arquivos grandes não precisam de cópia: a tradução é acrescentada no fim deles, e o original continua intacto no começo.
+- Se a tradução foi instalada com uma versão anterior do instalador, não há essa cópia. Nesse caso, use a Steam: botão direito no jogo → *Propriedades* → *Arquivos instalados* → *Verificar integridade dos arquivos*.
 
 ## Compatibilidade
 
 | Item | Situação |
 |---|---|
-| Versão Steam, atualização de 30/10/2026 | Suportada (patch v1.3) |
+| Versão Steam, atualização de 30/10/2026 | Suportada (patch v1.3.1) |
 | Versões anteriores da Steam | Use a release correspondente (v1.1) |
 | Outras lojas, cópias modificadas ou com outros patches | Não suportadas: o instalador recusa arquivos que não sejam os originais |
 | Windows 11 | Testado (Windows 10 deve funcionar, mas não foi testado) |

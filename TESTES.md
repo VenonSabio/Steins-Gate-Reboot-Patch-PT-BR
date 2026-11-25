@@ -11,6 +11,8 @@ Ao testar, atualize a linha e anote a versão do patch e o que foi visto.
 | Reinstalar por cima da tradução | Aprovado | v1.2 | Detecta que já está instalada |
 | Instalação offline (arquivos ao lado do .exe) | Aprovado | v1.2 | |
 | Recusa de versão incompatível | Aprovado | v1.2 | |
+| Desinstalar pelo instalador (volta byte a byte ao original) | Aprovado | v1.3.1 | |
+| Desinstalar sem backup (instalação antiga) recusa sem alterar nada | Aprovado | v1.3.1 | |
 | Desinstalação pela verificação de integridade da Steam | Não testado | | |
 | Windows 10 | Não testado | | |
 
