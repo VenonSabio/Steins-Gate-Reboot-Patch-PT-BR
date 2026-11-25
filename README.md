@@ -6,7 +6,7 @@ O patch **não contém o jogo**. Ele guarda só as diferenças em relação aos 
 
 ## O que está traduzido
 
-- **Roteiro:** todo o texto narrativo, 24.524 segmentos em 175 cenários, revisado com o japonês como fonte principal.
+- **Roteiro:** todo o texto narrativo, 24.524 segmentos em 175 cenários. O japonês foi usado como referência durante a tradução; a revisão humana completa do roteiro ainda está em andamento.
 - **Interface:** menus, ajustes, salvar/carregar, histórico, diálogos de sistema, ajuda e guias de controle.
 - **Telefone, e-mails, TIPS e fluxograma:** 290 verbetes de TIPS, e-mails, contatos, sinopses e nós do fluxograma.
 - **Gráficos:** tela inicial, títulos de capítulo, nomes de personagens, fóruns, telas de celular e textos decorativos da interface.
@@ -50,9 +50,32 @@ Encontrou um erro? Abra uma *Issue* com uma captura de tela e o ponto da histór
 - `gerar_patch.py`: gera o patch (formato SGPT1) a partir do pacote traduzido e da instalação original.
 - `InstaladorPatch.cs`: código do instalador. Compile com:
   ```
-  csc /target:exe /out:Instalar_Traducao_PTBR.exe /r:System.Web.Extensions.dll /r:System.Windows.Forms.dll InstaladorPatch.cs
+  csc /target:winexe /out:Instalar_Traducao_PTBR.exe -win32icon:sgre.ico /r:System.Web.Extensions.dll /r:System.Windows.Forms.dll /r:System.Drawing.dll InstaladorPatch.cs
   ```
 - `patch_ptbr.json`: índice do patch, com SHA-256 dos originais exigidos e dos resultados.
+- `validar_patch.py`: confere o pacote antes de publicar (veja abaixo).
+
+### Formato SGPT1
+
+O patch é um índice (`patch_ptbr.json`) mais um blob dividido em partes (`patch_ptbr.pak.000`, `.001`...).
+
+- `partes`: lista de partes, cada uma com `nome`, `bytes` e `sha256`.
+- `arquivos`: um item por arquivo do jogo, com:
+  - `destino`: caminho relativo à pasta do jogo;
+  - `tipo`: `append` (mantém o começo do original e acrescenta dados), `full` (substitui o arquivo inteiro) ou `novo` (arquivo que não existe no jogo);
+  - `bytes_original` e `sha256_original` (só em `append`): tamanho e hash do trecho original que precisa estar no começo do arquivo;
+  - `blocos`: lista `[parte, offset, tamanho]`, copiados em ordem para o fim do arquivo;
+  - `bytes_resultado` e `sha256_resultado`: tamanho e hash do arquivo final.
+
+O instalador confere todos os originais antes de alterar qualquer coisa, gera cada arquivo num temporário, confere o hash do resultado e só então substitui o original de forma atômica.
+
+### Validação antes de publicar
+
+```
+python validar_patch.py <pasta com patch_ptbr.json e as partes> [pasta do jogo original]
+```
+
+Confere hashes e tamanhos das partes, se todos os blocos estão dentro das partes, caminhos de destino, destinos duplicados e, se a pasta do jogo for passada, os hashes dos originais e a reconstrução completa de cada arquivo.
 
 ## Aviso legal
 
